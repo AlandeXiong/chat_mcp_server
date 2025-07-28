@@ -1,4 +1,7 @@
-n# MCP Backend (Spring Boot)
+# chat_mcp_server
+Chat mcp Server
+
+# MCP Backend (Spring Boot)
 
 This is a Spring Boot WebSocket server for the MCP (Multi-Channel Platform) demo. It simulates marketing campaign, segment, channel, and strategy info for front-end chat integration.
 
