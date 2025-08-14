@@ -21,46 +21,25 @@ spring:
             max-tokens: 4000
             temperature: 0.7
     
-    # MCP Server Configuration
+    # MCP Server Configuration - Spring AI 1.0.1 format
     mcp:
       server:
         enabled: true
         name: "Campaign Journey MCP Server"
         version: "1.0.0"
         description: "MCP Server for marketing campaign journey management using Spring AI"
-      
-      # MCP Client Configuration
-      client:
-        enabled: true
-        name: "campaign-journey-mcp-client"
-        version: "1.0.0"
-        type: SYNC  # or ASYNC for reactive applications
-        request-timeout: 30s
-        initialized: true
-        root-change-notification: true
-        toolcallback:
-          enabled: true
-        
-        # SSE Transport Configuration
-        sse:
-          connections:
-            local-server:
-              url: http://localhost:8080
-              sse-endpoint: /sse
-        
-        # Stdio Transport Configuration (optional)
+        transport: stdio
+        # Stdio transport configuration
         stdio:
+          enabled: true
           root-change-notification: false
-          connections:
-            local-server:
-              command: java
-              args:
-                - -jar
-                - mcp-server.jar
-              env:
-                DEBUG: "true"
+    
+    # Disable tool calling to avoid OAuth2 dependency issues
+    model:
+      tool:
+        enabled: false
 
-# Server Configuration
+# Server Configuration - Minimal for stdio transport
 server:
   port: 8080
 
@@ -76,7 +55,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,mcp
+        include: health,info
   endpoint:
     health:
       show-details: always 

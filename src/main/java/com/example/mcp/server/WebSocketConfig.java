@@ -1,6 +1,7 @@
-package com.example.mcp;
+package com.example.mcp.server;
 
-
+/*
+import com.example.mcp.server.MCPWebSocketHandler;
 import io.modelcontextprotocol.server.McpServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -19,4 +20,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(new MCPWebSocketHandler(mcpServer), "/chat").setAllowedOrigins("*");
     }
-} 
+}
+*/
+
+// WebSocket configuration disabled - using stdio transport only 

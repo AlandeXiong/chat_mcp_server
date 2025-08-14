@@ -1,4 +1,4 @@
-package com.example.mcp;
+package com.example.mcp.server;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

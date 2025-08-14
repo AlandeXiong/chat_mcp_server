@@ -1,11 +1,10 @@
-package com.example.mcp;
+package com.example.mcp.server;
 
 import io.modelcontextprotocol.server.McpServer;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-
-import org.springframework.ai.mcp.server.autoconfigure.McpServerProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -15,7 +14,7 @@ public class McpServerConfig {
 
     @Bean
     @Primary
-    public ChatClient chatClient(ChatModel chatModel) {
+    public ChatClient chatClient(@Qualifier("openAiChatModel") ChatModel chatModel) {
         return ChatClient.builder(chatModel)
             .defaultSystem("""
                 You are a marketing campaign assistant specialized in creating comprehensive marketing campaigns.

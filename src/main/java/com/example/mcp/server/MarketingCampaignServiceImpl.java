@@ -1,8 +1,7 @@
-package com.example.mcp;
+package com.example.mcp.server;
 
+import com.example.mcp.server.MarketingCampaignService;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
