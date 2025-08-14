@@ -38,10 +38,19 @@ spring:
     model:
       tool:
         enabled: false
+  
+  # Disable Spring Security for MCP stdio server
+  security:
+    enabled: false
+    basic:
+      enabled: false
+    user:
+      name: ""
+      password: ""
 
 # Server Configuration - Minimal for stdio transport
 server:
-  port: 8080
+  port: 8088
 
 # Logging Configuration
 logging:
@@ -49,13 +58,33 @@ logging:
     org.springframework.ai: DEBUG
     com.example.mcp: DEBUG
     org.springframework.ai.mcp: DEBUG
+    org.springframework.security: OFF
+    org.springframework.boot.actuate: OFF
 
-# Actuator Configuration
+# Actuator Configuration - Disabled security
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+      base-path: /actuator
   endpoint:
     health:
-      show-details: always 
+      show-details: always
+  security:
+    enabled: false
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    doc-expansion: none
+    default-models-expand-depth: 1
+    display-request-duration: true
+  packages-to-scan: com.example.mcp.controller
+  paths-to-match: /api/**

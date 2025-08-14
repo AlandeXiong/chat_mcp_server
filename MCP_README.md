@@ -11,6 +11,8 @@ This MCP (Model Context Protocol) server is configured to use **stdio transport 
 - ✅ Spring AI 1.0.1 integration
 - ✅ OpenAI and Azure OpenAI support
 - ✅ Marketing campaign assistance capabilities
+- ✅ Swagger API documentation
+- ✅ RESTful API endpoints
 
 ## Configuration
 
@@ -29,6 +31,14 @@ spring:
     model:
       tool:
         enabled: false  # Disabled to avoid OAuth2 issues
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
 ```
 
 ## Dependencies
@@ -37,7 +47,17 @@ spring:
 - Spring AI 1.0.1
 - MCP Server (stdio transport only)
 - Spring Security OAuth2 Client (required for Spring AI compatibility)
+- Swagger OpenAPI 3 (API documentation)
 - No web dependencies
+
+## API Documentation
+
+Once the server is running, you can access:
+
+- **Swagger UI**: http://localhost:8088/swagger-ui.html
+- **API Docs**: http://localhost:8088/v3/api-docs
+- **Health Check**: http://localhost:8088/api/health
+- **MCP Status**: http://localhost:8088/api/mcp/status
 
 ## Running the Server
 
@@ -73,10 +93,11 @@ java -jar target/mcp-backend-1.0.0.jar \
 
 ### Common Issues
 
-1. **Port conflicts**: The server runs on port 8080 by default
+1. **Port conflicts**: The server runs on port 8088 by default
 2. **MCP client errors**: Ensure `spring.ai.mcp.client.enabled=false` (not needed in this config)
 3. **Transport errors**: Ensure `spring.ai.mcp.server.stdio.enabled=true`
 4. **OAuth2 errors**: Ensure `spring.ai.model.tool.enabled=false`
+5. **Swagger not accessible**: Ensure `springdoc.swagger-ui.enabled=true`
 
 ### Debug Mode
 
@@ -93,10 +114,13 @@ This MCP server can be integrated with:
 - AI development tools
 - Command-line interfaces
 - Automation scripts
+- RESTful API clients
 
 ## Architecture
 
 - **McpServerConfig**: Configures ChatClient and PromptTemplate
 - **WebSocketConfig**: Disabled (stdio transport only)
+- **ApiController**: Provides RESTful API endpoints with Swagger documentation
+- **SwaggerConfig**: Configures OpenAPI documentation
 - **McpServerApplication**: Main application with conditional MCP server loading
 - **Stdio Transport**: Handles MCP communication via standard input/output
