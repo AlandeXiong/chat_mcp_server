@@ -1,5 +1,7 @@
 package com.example.mcp;
 
+
+import io.modelcontextprotocol.server.McpServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -11,7 +13,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 public class WebSocketConfig implements WebSocketConfigurer {
     
     @Autowired
-    private Object mcpServer;
+    private McpServer mcpServer;
     
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
