@@ -331,4 +331,44 @@ public class MarketingCampaignServiceImpl implements MarketingCampaignService {
             "timestamp", System.currentTimeMillis()
         );
     }
+    
+    @Override
+    public String processChatMessage(String message) {
+        try {
+            String prompt = "You are a marketing campaign expert. Please respond to this user message: " + message + 
+                "\n\nProvide helpful, actionable advice related to marketing campaigns, audience segmentation, " +
+                "channel strategy, email templates, or campaign optimization. Keep your response concise but informative.";
+            
+            return chatClient.prompt().user(prompt).call().content();
+        } catch (Exception e) {
+            return "I apologize, but I encountered an error processing your message: " + e.getMessage() + 
+                ". Please try rephrasing your question or contact support if the issue persists.";
+        }
+    }
+    
+    @Override
+    public String generateCampaignAdvice(String campaignType, String targetAudience, Double budget) {
+        try {
+            String prompt = String.format(
+                "Generate comprehensive marketing campaign advice for:\n" +
+                "- Campaign Type: %s\n" +
+                "- Target Audience: %s\n" +
+                "- Budget: $%.2f\n\n" +
+                "Please provide specific recommendations for:\n" +
+                "1. Campaign strategy and objectives\n" +
+                "2. Target audience insights and segmentation\n" +
+                "3. Channel recommendations and budget allocation\n" +
+                "4. Timeline and milestones\n" +
+                "5. Key performance indicators\n" +
+                "6. Risk assessment and mitigation strategies\n\n" +
+                "Format your response in a clear, structured manner with actionable insights.",
+                campaignType, targetAudience, budget
+            );
+            
+            return chatClient.prompt().user(prompt).call().content();
+        } catch (Exception e) {
+            return "I apologize, but I encountered an error generating campaign advice: " + e.getMessage() + 
+                ". Please try again or contact support if the issue persists.";
+        }
+    }
 } 

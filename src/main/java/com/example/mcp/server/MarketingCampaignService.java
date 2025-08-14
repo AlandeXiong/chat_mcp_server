@@ -49,4 +49,20 @@ public interface MarketingCampaignService {
      * @return Budget optimization recommendations
      */
     CompletableFuture<Map<String, Object>> optimizeBudgetAllocation(String request);
+    
+    /**
+     * Process chat message and get AI response
+     * @param message User's chat message
+     * @return AI response
+     */
+    String processChatMessage(String message);
+    
+    /**
+     * Generate AI-powered campaign advice
+     * @param campaignType Type of campaign
+     * @param targetAudience Target audience description
+     * @param budget Campaign budget
+     * @return AI-generated advice
+     */
+    String generateCampaignAdvice(String campaignType, String targetAudience, Double budget);
 } 
