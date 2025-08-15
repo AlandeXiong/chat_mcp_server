@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.example.mcp.client.McpClientService;
+import com.example.mcp.client.MCPClientService;
 
 /**
  * AI Recommendation Generator
@@ -22,7 +22,7 @@ public class AIRecommendationGenerator {
     private AzureOpenAiChatModel chatModel;
     
     @Autowired
-    private McpClientService mcpClientService;
+    private MCPClientService mcpClientService;
 
 
     @Autowired

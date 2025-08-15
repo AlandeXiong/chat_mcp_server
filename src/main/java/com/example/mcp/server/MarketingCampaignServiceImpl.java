@@ -365,7 +365,7 @@ public class MarketingCampaignServiceImpl implements MarketingCampaignService {
                 campaignType, targetAudience, budget
             );
             
-            return chatClient.call(prompt);
+            return chatClient.prompt().user(prompt).call().content();
         } catch (Exception e) {
             return "I apologize, but I encountered an error generating campaign advice: " + e.getMessage() + 
                 ". Please try again or contact support if the issue persists.";

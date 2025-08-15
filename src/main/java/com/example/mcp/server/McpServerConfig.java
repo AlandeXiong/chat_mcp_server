@@ -9,6 +9,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+/**
+ * MCP Server Configuration
+ * Configures the MCP server with AI components and marketing campaign tools
+ */
 @Configuration
 public class McpServerConfig {
 
@@ -16,8 +20,11 @@ public class McpServerConfig {
     @Qualifier("azureOpenAiChatModel")
     private AzureOpenAiChatModel chatModel;
 
-        @Bean
-    @Primary
+    /**
+     * ChatClient bean for MCP server
+     * Provides AI chat capabilities for marketing campaign assistance
+     */
+    @Bean
     public ChatClient chatClient() {
         return ChatClient.builder(chatModel)
             .defaultSystem("""
@@ -36,24 +43,50 @@ public class McpServerConfig {
                 """)
             .build();
     }
-    
+
+    /**
+     * ChatClient.Builder bean for dependency injection
+     * Allows services to build their own ChatClient instances
+     */
+    @Bean
+    @Primary
+    public ChatClient.Builder chatClientBuilder() {
+        return ChatClient.builder(chatModel)
+            .defaultSystem("""
+                You are a marketing campaign assistant specialized in creating comprehensive marketing campaigns.
+                You can help with:
+                1. Creating marketing campaigns with detailed strategies
+                2. Defining target audience segments
+                3. Developing channel strategies (Email, SMS, Social Media, etc.)
+                4. Creating email templates and content
+                5. Budget allocation and campaign planning
+                6. Campaign performance metrics and KPIs
+                7. Multi-channel marketing optimization
+                
+                Always provide structured, actionable marketing advice with specific recommendations.
+                Format your responses in a clear, professional manner suitable for business use.
+                """);
+    }
+
+    /**
+     * Marketing prompt template for campaign creation
+     * Provides structured prompts for AI marketing assistance
+     */
     @Bean
     public PromptTemplate marketingPromptTemplate() {
         return new PromptTemplate("""
-            You are a marketing campaign expert. Based on the user's request, provide detailed, actionable marketing advice.
+            Create a marketing campaign for:
+            Industry: {industry}
+            Target Audience: {targetAudience}
+            Budget: ${budget}
             
-            User request: {request}
-            
-            Please provide a comprehensive response that includes:
-            1. Campaign strategy and objectives
-            2. Target audience segmentation
+            Please provide:
+            1. Campaign strategy overview
+            2. Target audience analysis
             3. Channel recommendations
-            4. Budget allocation suggestions
+            4. Content suggestions
             5. Timeline and milestones
-            6. Key performance indicators
-            7. Risk assessment and mitigation strategies
-            
-            Format your response in a clear, structured manner with actionable insights.
+            6. Success metrics
             """);
     }
 } 
