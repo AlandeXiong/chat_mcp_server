@@ -21,6 +21,7 @@ public class ConversationResponse {
         INFO,               // 信息性响应
         GATHERING_INFO,     // 收集信息
         CONFIRMING_PARAMS,  // 确认参数
+        NODE_RECOMMENDATIONS, // 节点建议
         COMPLETED,          // 完成
         ERROR               // 错误
     }
@@ -59,6 +60,14 @@ public class ConversationResponse {
         response.parameters = finalParams;
         response.summary = summary;
         response.requiresUserAction = false;
+        return response;
+    }
+    
+    public static ConversationResponse nodeRecommendations(String message, Map<String, Object> recommendations, String summary) {
+        ConversationResponse response = new ConversationResponse(ResponseType.NODE_RECOMMENDATIONS, message);
+        response.parameters = recommendations;
+        response.summary = summary;
+        response.requiresUserAction = true;
         return response;
     }
     

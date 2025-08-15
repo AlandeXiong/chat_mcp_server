@@ -1,9 +1,7 @@
 package com.example.mcp.server;
 
-import io.modelcontextprotocol.server.McpServer;
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,11 +12,11 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class McpServerConfig {
 
-
     @Autowired
-    AzureOpenAiChatModel chatModel;
+    @Qualifier("azureOpenAiChatModel")
+    private AzureOpenAiChatModel chatModel;
 
-    @Bean
+        @Bean
     @Primary
     public ChatClient chatClient() {
         return ChatClient.builder(chatModel)

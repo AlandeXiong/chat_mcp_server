@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Dialog Manager for Intelligent Marketing Campaign Conversations
@@ -17,6 +19,9 @@ public class IntelligentConversationManager {
     
     @Autowired
     private ChatClient chatClient;
+    
+    @Autowired
+    private AIRecommendationGenerator recommendationGenerator;
     
     // 存储活跃的对话会话
     private final Map<String, ConversationContext> activeSessions = new ConcurrentHashMap<>();
@@ -74,7 +79,7 @@ public class IntelligentConversationManager {
             }
             """, message, context.getTurnCount(), context.getParameters());
         
-        String aiResponse = chatClient.call(prompt);
+        String aiResponse = chatClient.prompt().user(prompt).call().content();
         return parseIntentAnalysis(aiResponse);
     }
     
@@ -117,20 +122,67 @@ public class IntelligentConversationManager {
             );
         }
         
-        // 如果信息足够，进入确认阶段
+        // 如果信息足够，进入节点建议阶段
         if (hasRequiredParameters(context)) {
             context.setState(ConversationContext.ConversationState.CONFIRMING_PARAMS);
-            return ConversationResponse.confirmingParameters(
-                "请确认以下营销活动参数:",
-                context.getParameters(),
-                generateCampaignSummary(context)
-            );
+            return generateNodeRecommendations(context);
         }
         
         // 继续收集信息
         String nextQuestion = generateNextQuestion(context);
         context.setCurrentQuestion(nextQuestion);
         return ConversationResponse.gatheringInfo(nextQuestion, getMissingParameters(context), context.getParameters());
+    }
+    
+    /**
+     * 生成节点建议
+     */
+    private ConversationResponse generateNodeRecommendations(ConversationContext context) {
+        try {
+            String campaignType = (String) context.getParameter("campaignType");
+            String targetAudience = (String) context.getParameter("targetAudience");
+            Double budget = (Double) context.getParameter("budget");
+            String duration = (String) context.getParameter("duration");
+            
+            // 生成人群选择建议
+            Map<String, Object> segmentRecommendations = recommendationGenerator.generateSegmentRecommendations(
+                campaignType, targetAudience, budget);
+            
+            // 生成投放策略建议
+            Map<String, Object> strategyRecommendations = recommendationGenerator.generateStrategyRecommendations(
+                campaignType, targetAudience, budget, segmentRecommendations);
+            
+            // 生成邮件模板建议
+            Map<String, Object> emailTemplateRecommendations = recommendationGenerator.generateEmailTemplateRecommendations(
+                campaignType, targetAudience, segmentRecommendations, strategyRecommendations);
+            
+            // 生成条件判断建议
+            Map<String, Object> conditionRecommendations = recommendationGenerator.generateConditionRecommendations(
+                campaignType, segmentRecommendations, strategyRecommendations);
+            
+            // 生成客户旅程建议
+            Map<String, Object> journeyRecommendations = recommendationGenerator.generateCustomerJourneyRecommendations(
+                campaignType, targetAudience, segmentRecommendations);
+            
+            // 构建建议响应
+            Map<String, Object> allRecommendations = new HashMap<>();
+            allRecommendations.put("segment", segmentRecommendations);
+            allRecommendations.put("strategy", strategyRecommendations);
+            allRecommendations.put("emailTemplate", emailTemplateRecommendations);
+            allRecommendations.put("condition", conditionRecommendations);
+            allRecommendations.put("customerJourney", journeyRecommendations);
+            
+            context.addParameter("aiRecommendations", allRecommendations);
+            
+            return ConversationResponse.nodeRecommendations(
+                "AI已为您的营销活动生成了详细的节点配置建议，请逐一确认：",
+                allRecommendations,
+                generateCampaignSummary(context)
+            );
+            
+        } catch (Exception e) {
+            return ConversationResponse.error("生成节点建议时出现错误: " + e.getMessage());
+        }
     }
     
     /**
@@ -169,7 +221,7 @@ public class IntelligentConversationManager {
             请生成一个自然、友好的问题来询问缺失的信息。
             """, context.getParameters(), getMissingParameters(context));
         
-        return chatClient.call(prompt);
+        return chatClient.prompt().user(prompt).call().content();
     }
     
     /**
@@ -219,7 +271,7 @@ public class IntelligentConversationManager {
             请生成一个简洁、专业的活动摘要，突出关键信息。
             """, context.getParameters());
         
-        return chatClient.call(prompt);
+        return chatClient.prompt().user(prompt).call().content();
     }
     
     /**

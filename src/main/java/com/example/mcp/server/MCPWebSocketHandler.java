@@ -1,6 +1,6 @@
 package com.example.mcp.server;
 
-import com.example.mcp.client.MCPClientService;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.modelcontextprotocol.server.McpServer;

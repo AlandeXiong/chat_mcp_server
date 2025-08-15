@@ -1,10 +1,8 @@
 package com.example.mcp.client;
 
 
-import io.modelcontextprotocol.client.McpAsyncClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Autowired;
+import io.modelcontextprotocol.client.McpClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,133 +10,155 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Service for interacting with MCP servers using MCP clients
+ * MCP Client Service
+ * Retrieves model context services from marketing services through MCP protocol
  */
 @Service
-public class MCPClientService {
-    
-    @Autowired(required = false)
-    private List<McpSyncClient> mcpSyncClients;
-    
-    @Autowired(required = false)
-    private List<McpAsyncClient> mcpAsyncClients;
-    
-    @Autowired(required = false)
-    private SyncMcpToolCallbackProvider toolCallbackProvider;
-    
+public class McpClientService {
+
+    @Value("${spring.ai.mcp.client.enabled:false}")
+    private boolean mcpClientEnabled;
+
+    @Value("${spring.ai.mcp.client.marketing.service.path:}")
+    private String marketingServicePath;
+
+    private McpClient mcpClient;
+
     /**
-     * Get all available MCP sync clients
-     * @return List of sync clients
+     * Initialize MCP client connection to marketing service
      */
-    public List<McpSyncClient> getSyncClients() {
-        return mcpSyncClients != null ? mcpSyncClients : List.of();
-    }
-    
-    /**
-     * Get all available MCP async clients
-     * @return List of async clients
-     */
-    public List<McpAsyncClient> getAsyncClients() {
-        return mcpAsyncClients != null ? mcpAsyncClients : List.of();
-    }
-    
-    /**
-     * Get tool callbacks from MCP clients
-     * @return Tool callbacks
-     */
-    public Object getToolCallbacks() {
-        if (toolCallbackProvider != null) {
-            return toolCallbackProvider.getToolCallbacks();
+    public void initializeMcpClient() {
+        if (!mcpClientEnabled) {
+            return;
         }
-        return "Tool callbacks not available";
+
+        try {
+            // Configure stdio transport for MCP client
+            StdioTransportConfig transportConfig = StdioTransportConfig.builder()
+                .command(marketingServicePath)
+                .args(List.of("--mcp-server"))
+                .build();
+
+            StdioTransport transport = new StdioTransport(transportConfig);
+
+            // Configure MCP client
+            McpClientConfig clientConfig = McpClientConfig.builder()
+                .transport(transport)
+                .build();
+
+            mcpClient = new McpClient(clientConfig);
+
+            // Connect to marketing service
+            mcpClient.connect();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to initialize MCP client: " + e.getMessage(), e);
+        }
     }
-    
+
     /**
-     * Send a request to the first available MCP sync client
-     * @param request The request to send
-     * @return Response from MCP server
+     * Get available tools from marketing service
      */
-    public CompletableFuture<String> sendRequest(String request) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                if (mcpSyncClients != null && !mcpSyncClients.isEmpty()) {
-                    McpSyncClient client = mcpSyncClients.get(0);
-                    // Use the client to send request
-                    return "MCP Server Response via Sync Client: " + request;
-                } else {
-                    return "No MCP sync clients available";
-                }
-            } catch (Exception e) {
-                return "Error communicating with MCP server: " + e.getMessage();
-            }
-        });
+    public List<Map<String, Object>> getMarketingTools() {
+        if (mcpClient == null) {
+            throw new IllegalStateException("MCP client not initialized");
+        }
+
+        try {
+            // Request tools from marketing service
+            CompletableFuture<List<Map<String, Object>>> toolsFuture = mcpClient.listTools();
+            return toolsFuture.get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get marketing tools: " + e.getMessage(), e);
+        }
     }
-    
+
     /**
-     * Get server information from MCP clients
-     * @return Server information
+     * Call marketing service tool
      */
-    public CompletableFuture<Map<String, Object>> getServerInfo() {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                int syncClientCount = mcpSyncClients != null ? mcpSyncClients.size() : 0;
-                int asyncClientCount = mcpAsyncClients != null ? mcpAsyncClients.size() : 0;
-                
-                return Map.of(
-                    "name", "Campaign Journey MCP Server",
-                    "version", "1.0.0",
-                    "status", "running",
-                    "capabilities", "marketing campaign management",
-                    "ai_provider", "Spring AI",
-                    "mcp_clients", Map.of(
-                        "sync_clients", syncClientCount,
-                        "async_clients", asyncClientCount
-                    ),
-                    "timestamp", System.currentTimeMillis()
-                );
-            } catch (Exception e) {
-                return Map.of(
-                    "error", "Failed to get server info: " + e.getMessage(),
-                    "status", "error",
-                    "timestamp", System.currentTimeMillis()
-                );
-            }
-        });
+    public Map<String, Object> callMarketingTool(String toolName, Map<String, Object> arguments) {
+        if (mcpClient == null) {
+            throw new IllegalStateException("MCP client not initialized");
+        }
+
+        try {
+            // Call specific tool on marketing service
+            CompletableFuture<Map<String, Object>> resultFuture = mcpClient.callTool(toolName, arguments);
+            return resultFuture.get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to call marketing tool: " + e.getMessage(), e);
+        }
     }
-    
+
     /**
-     * Check MCP server health
-     * @return Health status
+     * Get marketing service resources
      */
-    public CompletableFuture<Map<String, Object>> checkHealth() {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                boolean syncClientsHealthy = mcpSyncClients != null && !mcpSyncClients.isEmpty();
-                boolean asyncClientsHealthy = mcpAsyncClients != null && !mcpAsyncClients.isEmpty();
-                boolean toolCallbacksAvailable = toolCallbackProvider != null;
-                
-                String overallStatus = (syncClientsHealthy || asyncClientsHealthy) ? "healthy" : "unhealthy";
-                
-                return Map.of(
-                    "status", overallStatus,
-                    "message", "MCP Server health check completed",
-                    "components", Map.of(
-                        "web", "healthy",
-                        "websocket", "healthy",
-                        "ai_service", "healthy",
-                        "mcp_sync_clients", syncClientsHealthy ? "healthy" : "unavailable",
-                        "mcp_async_clients", asyncClientsHealthy ? "healthy" : "unavailable",
-                        "tool_callbacks", toolCallbacksAvailable ? "available" : "unavailable"
-                    ),
-                    "timestamp", System.currentTimeMillis()
-                );
-            } catch (Exception e) {
-                return Map.of(
-                    "status", "unhealthy",
-                    "error", e.getMessage(),
-                    "timestamp", System.currentTimeMillis()
-                );
-            }
-        });
+    public List<Map<String, Object>> getMarketingResources(String resourceType) {
+        if (mcpClient == null) {
+            throw new IllegalStateException("MCP client not initialized");
+        }
+
+        try {
+            // Request resources from marketing service
+            CompletableFuture<List<Map<String, Object>>> resourcesFuture = mcpClient.listResources(resourceType);
+            return resourcesFuture.get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get marketing resources: " + e.getMessage(), e);
+        }
     }
-} 
+
+    /**
+     * Read marketing service resource content
+     */
+    public String readMarketingResource(String resourceUri) {
+        if (mcpClient == null) {
+            throw new IllegalStateException("MCP client not initialized");
+        }
+
+        try {
+            // Read specific resource from marketing service
+            CompletableFuture<String> contentFuture = mcpClient.readResource(resourceUri);
+            return contentFuture.get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read marketing resource: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Get marketing service schemas
+     */
+    public Map<String, Object> getMarketingSchemas() {
+        if (mcpClient == null) {
+            throw new IllegalStateException("MCP client not initialized");
+        }
+
+        try {
+            // Request schemas from marketing service
+            CompletableFuture<Map<String, Object>> schemasFuture = mcpClient.listSchemas();
+            return schemasFuture.get();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get marketing schemas: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Check if MCP client is connected
+     */
+    public boolean isConnected() {
+        return mcpClient != null && mcpClient.isConnected();
+    }
+
+    /**
+     * Disconnect MCP client
+     */
+    public void disconnect() {
+        if (mcpClient != null) {
+            try {
+                mcpClient.disconnect();
+            } catch (Exception e) {
+                // Log error but don't throw
+                System.err.println("Error disconnecting MCP client: " + e.getMessage());
+            }
+        }
+    }
+}

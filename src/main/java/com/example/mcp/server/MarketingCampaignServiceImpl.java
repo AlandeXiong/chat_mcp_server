@@ -51,7 +51,7 @@ public class MarketingCampaignServiceImpl implements MarketingCampaignService {
             try {
                 String prompt = "Define target audience segments for: " + request + 
                     ". Include demographics, psychographics, behavior patterns, and segment priorities.";
-                
+
 
                 String content = chatClient.prompt().user(prompt).call().content();
                 
@@ -339,7 +339,7 @@ public class MarketingCampaignServiceImpl implements MarketingCampaignService {
                 "\n\nProvide helpful, actionable advice related to marketing campaigns, audience segmentation, " +
                 "channel strategy, email templates, or campaign optimization. Keep your response concise but informative.";
             
-            return chatClient.prompt().user(prompt).call().content();
+            return  chatClient.prompt().user(prompt).call().content();
         } catch (Exception e) {
             return "I apologize, but I encountered an error processing your message: " + e.getMessage() + 
                 ". Please try rephrasing your question or contact support if the issue persists.";
@@ -365,7 +365,7 @@ public class MarketingCampaignServiceImpl implements MarketingCampaignService {
                 campaignType, targetAudience, budget
             );
             
-            return chatClient.prompt().user(prompt).call().content();
+            return chatClient.call(prompt);
         } catch (Exception e) {
             return "I apologize, but I encountered an error generating campaign advice: " + e.getMessage() + 
                 ". Please try again or contact support if the issue persists.";

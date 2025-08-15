@@ -3,6 +3,7 @@ package com.example.mcp.controller;
 import com.example.mcp.server.MarketingCampaignService;
 import com.example.mcp.server.IntelligentConversationManager;
 import com.example.mcp.server.ConversationContext;
+import com.example.mcp.server.CampaignCreationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +27,12 @@ public class ChatController {
     
     @Autowired
     private IntelligentConversationManager conversationManager;
+    
+    @Autowired
+    private CampaignCreationService campaignCreationService;
+    
+    @Autowired
+    private McpClientService mcpClientService;
 
     @PostMapping("/send")
     @Operation(summary = "Send Chat Message", description = "Send a message to AI and get response")
@@ -257,5 +264,215 @@ public class ChatController {
         result.put("timestamp", System.currentTimeMillis());
         
         return ResponseEntity.ok(result);
+    }
+    
+    @PostMapping("/create-campaign")
+    @Operation(summary = "Create Campaign", description = "Create marketing campaign based on confirmed parameters and AI recommendations")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Campaign created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request"),
+        @ApiResponse(responseCode = "500", description = "Creation error")
+    })
+    public ResponseEntity<Map<String, Object>> createCampaign(
+        @Parameter(description = "Campaign creation request", required = true) @RequestBody CreateCampaignRequest request
+    ) {
+        try {
+            var response = campaignCreationService.createCampaign(
+                request.getUserId(), 
+                request.getConfirmedParams(), 
+                request.getAiRecommendations()
+            );
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("campaign", response);
+            result.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+    
+    @PostMapping("/activate-campaign/{campaignId}")
+    @Operation(summary = "Activate Campaign", description = "Activate a marketing campaign")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Campaign activated successfully"),
+        @ApiResponse(responseCode = "500", description = "Activation error")
+    })
+    public ResponseEntity<Map<String, Object>> activateCampaign(
+        @Parameter(description = "Campaign ID", required = true) @PathVariable String campaignId
+    ) {
+        try {
+            var response = campaignCreationService.activateCampaign(campaignId);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("result", response);
+            result.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+    
+    @GetMapping("/campaign-status/{campaignId}")
+    @Operation(summary = "Get Campaign Status", description = "Get marketing campaign status")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Status retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Campaign not found")
+    })
+    public ResponseEntity<Map<String, Object>> getCampaignStatus(
+        @Parameter(description = "Campaign ID", required = true) @PathVariable String campaignId
+    ) {
+        try {
+            var response = campaignCreationService.getCampaignStatus(campaignId);
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("result", response);
+            result.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+    
+    // Campaign Creation DTO
+    public static class CreateCampaignRequest {
+        private String userId;
+        private Map<String, Object> confirmedParams;
+        private Map<String, Object> aiRecommendations;
+        
+        public String getUserId() { return userId; }
+        public void setUserId(String userId) { this.userId = userId; }
+        
+        public Map<String, Object> getConfirmedParams() { return confirmedParams; }
+        public void setConfirmedParams(Map<String, Object> confirmedParams) { this.confirmedParams = confirmedParams; }
+        
+        public Map<String, Object> getAiRecommendations() { return aiRecommendations; }
+        public void setAiRecommendations(Map<String, Object> aiRecommendations) { this.aiRecommendations = aiRecommendations; }
+    }
+    
+    @PostMapping("/mcp-client/connect")
+    @Operation(summary = "Connect MCP Client", description = "Initialize MCP client connection to marketing service")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "MCP client connected successfully"),
+        @ApiResponse(responseCode = "500", description = "Connection failed")
+    })
+    public ResponseEntity<Map<String, Object>> connectMcpClient() {
+        try {
+            mcpClientService.initializeMcpClient();
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "MCP client connected successfully");
+            result.put("connected", mcpClientService.isConnected());
+            result.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+    
+    @GetMapping("/mcp-client/status")
+    @Operation(summary = "Get MCP Client Status", description = "Get MCP client connection status")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Status retrieved successfully")
+    })
+    public ResponseEntity<Map<String, Object>> getMcpClientStatus() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("connected", mcpClientService.isConnected());
+        result.put("timestamp", System.currentTimeMillis());
+        
+        return ResponseEntity.ok(result);
+    }
+    
+    @GetMapping("/mcp-client/marketing-info")
+    @Operation(summary = "Get Marketing Service Info", description = "Get marketing service information through MCP client")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Information retrieved successfully"),
+        @ApiResponse(responseCode = "500", description = "Failed to get information")
+    })
+    public ResponseEntity<Map<String, Object>> getMarketingServiceInfo() {
+        try {
+            // Get marketing service info through AI recommendation generator
+            Map<String, Object> marketingInfo = new HashMap<>();
+            marketingInfo.put("success", true);
+            marketingInfo.put("data", "Marketing service information will be available after MCP client integration");
+            marketingInfo.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(marketingInfo);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+    
+    @PostMapping("/mcp-client/call-tool")
+    @Operation(summary = "Call Marketing Service Tool", description = "Call a tool on marketing service through MCP client")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Tool called successfully"),
+        @ApiResponse(responseCode = "500", description = "Tool call failed")
+    })
+    public ResponseEntity<Map<String, Object>> callMarketingServiceTool(
+        @Parameter(description = "Tool call request", required = true) @RequestBody ToolCallRequest request
+    ) {
+        try {
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "Tool call functionality will be available after MCP client integration");
+            result.put("toolName", request.getToolName());
+            result.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            errorResponse.put("timestamp", System.currentTimeMillis());
+            
+            return ResponseEntity.status(500).body(errorResponse);
+        }
+    }
+    
+    // Tool Call DTO
+    public static class ToolCallRequest {
+        private String toolName;
+        private Map<String, Object> arguments;
+        
+        public String getToolName() { return toolName; }
+        public void setToolName(String toolName) { this.toolName = toolName; }
+        
+        public Map<String, Object> getArguments() { return arguments; }
+        public void setArguments(Map<String, Object> arguments) { this.arguments = arguments; }
     }
 }

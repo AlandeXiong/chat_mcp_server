@@ -33,6 +33,12 @@ spring:
         stdio:
           enabled: true
           root-change-notification: false
+      # MCP Client Configuration
+      client:
+        enabled: true
+        marketing:
+          service:
+            path: "/path/to/marketing/service"
     
     # Disable tool calling to avoid OAuth2 dependency issues
     model:
